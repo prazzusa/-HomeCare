@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // User: { uid, email, role, displayName, createdAt }
+    // Provider: { id, name, type, email, phone, certifications, licenseExpiry, backgroundCheckDate, status }
+    // Transaction: { id, date, amount, description, category, providerId, status, taxForm }
+    // Patient: { id, name, dob, medicaidId, careRequirements, region, intakeStatus, eSignature }
+    // Schedule: { id, patientId, providerId, visitDate, status, notes }
+    // AuditLog: { id, timestamp, userId, action, resource, details }
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "khanalpuspa@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isManager() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' || isAdmin());
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.role in ['admin', 'manager', 'provider'];
+    }
+
+    function isValidProvider(data) {
+      return data.keys().hasAll(['name', 'type', 'status']) &&
+             data.type in ['W2', 'Contractor', 'Outsourced_PT', 'Outsourced_OT', 'Maintenance'];
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['date', 'amount', 'description', 'status']) &&
+             data.amount is number;
+    }
+
+    function isValidPatient(data) {
+      return data.keys().hasAll(['name', 'intakeStatus']);
+    }
+
+    function isValidSchedule(data) {
+      return data.keys().hasAll(['patientId', 'providerId', 'visitDate', 'status']);
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['timestamp', 'userId', 'action']);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isManager();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+    }
+
+    match /providers/{providerId} {
+      allow read: if isManager();
+      allow write: if isManager() && isValidProvider(request.resource.data);
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isManager();
+      allow write: if isManager() && isValidTransaction(request.resource.data);
+    }
+
+    match /patients/{patientId} {
+      allow read: if isManager();
+      allow write: if isManager() && isValidPatient(request.resource.data);
+    }
+
+    match /schedules/{scheduleId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager() && isValidSchedule(request.resource.data);
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-bg-main: #F9FAFB;
+  --color-sidebar: #FFFFFF;
+  --color-brand-primary: #0284C7;
+  --color-border-subtle: #E5E7EB;
+  --color-text-main: #111827;
+  --color-text-sub: #6B7280;
+  --color-accent-success: #10B981;
+  --color-accent-warning: #F59E0B;
+  --color-accent-danger: #EF4444;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-main text-text-main font-sans;
+  }
+}
+
+@layer components {
+  .card-minimal {
+    @apply bg-white border border-border-subtle rounded-xl shadow-sm p-5;
+  }
+  
+  .btn-minimal-primary {
+    @apply bg-brand-primary text-white px-4 py-2 rounded-md text-xs font-semibold hover:bg-sky-700 transition-colors;
+  }
+  
+  .status-badge-minimal {
+    @apply text-[11px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-emerald-100 text-emerald-800 flex items-center gap-1;
+  }
+}

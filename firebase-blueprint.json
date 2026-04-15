@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user with role-based access control.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "manager", "provider"] },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Provider": {
+      "title": "Provider",
+      "description": "Staff, contractor, or outsourced therapist.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["W2", "Contractor", "Outsourced_PT", "Outsourced_OT", "Maintenance"] },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "certifications": { "type": "array", "items": { "type": "object" } },
+        "licenseExpiry": { "type": "string", "format": "date" },
+        "backgroundCheckDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["active", "inactive", "pending"] }
+      },
+      "required": ["name", "type", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction for agency accounting.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "providerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "categorized", "validated"] },
+        "taxForm": { "type": "string", "enum": ["1120-S", "1099", "W-2"] }
+      },
+      "required": ["date", "amount", "description", "status"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient intake and care information.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "dob": { "type": "string", "format": "date" },
+        "medicaidId": { "type": "string" },
+        "careRequirements": { "type": "string" },
+        "region": { "type": "string" },
+        "intakeStatus": { "type": "string", "enum": ["pending", "completed"] },
+        "eSignature": { "type": "string" }
+      },
+      "required": ["name", "intakeStatus"]
+    },
+    "Schedule": {
+      "title": "Schedule",
+      "description": "Care visit scheduling.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "providerId": { "type": "string" },
+        "visitDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["patientId", "providerId", "visitDate", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "HIPAA compliance audit trail.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "resource": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["timestamp", "userId", "action"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "Private user profiles" },
+    "/providers/{providerId}": { "schema": "Provider", "description": "Agency providers" },
+    "/transactions/{transactionId}": { "schema": "Transaction", "description": "Financial records" },
+    "/patients/{patientId}": { "schema": "Patient", "description": "Patient records" },
+    "/schedules/{scheduleId}": { "schema": "Schedule", "description": "Visit schedules" },
+    "/audit_logs/{logId}": { "schema": "AuditLog", "description": "Compliance logs" }
+  }
+}
